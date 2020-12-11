@@ -8,6 +8,7 @@
 	//constants for "__asm" brackets
 	const  double part = 0.05;
 	const  double zero = 0;
+	
 	 double result = 0;
 
 	__asm
@@ -17,12 +18,26 @@
 		fld x; st == y
 		fild y
 		; fmul y; st == y * x
-		FMULP ST(1),ST(0)
+		FMULP ST(1), ST(0)
 		fcom zero
-		test ax, 0100h
 		fwait
+		FSTSW AX
+		fwait
+		test ax, 0100h
 		jnz lessThanZero
 
+
+		
+		FLDPI
+		FADD  ST, ST; ST(0) = 2
+		FXCH ST(1)
+	
+		M1 : FPREM1
+		FSTSW  AX; Пересылаем С2 в флаг PF
+		SAHF
+		JP   M1; Если PF = 1 (C2 = 1), то продолжить деление
+
+		passCalc:
 		fsin; st == sint(st)
 		fmul part; st == st * 0.05
 		fstp result; result == st
@@ -53,10 +68,6 @@ int main()
 	std::cout << "y = ";
 	std::cin >> y;
 
-	if (x * y > (pow(2, 63))) {
-		std::cout << "Ошибка, x*y > 2^63" << std::endl;
-		return 0;
-	}
 
 	if ((x * y)  >= 0) 
 	{
